@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🏡 House Price Predictor</title>
+  <style>
+/* Universal box model and reset for consistency */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+h2 {
+  background-color: rgba(0, 0, 0, 0.7); /* Same as the form background */
+  color: white; /* Text color */
+  padding: 15px; /* Add padding for spacing */
+  border-radius: 10px; /* Rounded corners */
+  max-width: 700px; /* Match the form width */
+  margin: 20px auto; /* Center the heading */
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.6); /* Add a shadow for prominence */
+  text-align: center; /* Center the text */
+}
+p {
+  
+  font-size: 1.2em; /* Slightly larger font size for readability */
+  color: #fff; /* White text color */
+  margin-top: 10px; /* Add some space above the paragraph */
+  margin-bottom: 20px; /* Add space below the paragraph */
+  margin: 20px auto; /* Center the heading */
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.6); /* Add a shadow for prominence */
+  background-color: rgba(0, 0, 0, 0.7); /* Same background as the heading */
+  padding: 15px; /* Add padding for spacing */
+  border-radius: 10px; /* Rounded corners */
+  max-width: 700px; /* Match the form width */
+  text-align: center; /* Center the paragraph text */
+}
+/* Entire Page Styling */
+body {
+  background-image: url("/static/pic4.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  font-family: Arial, sans-serif;
+  color: #fff;
+  padding: 20px;
+  margin: 0;
+}
+
+/* Main Form Container */
+form {
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 30px;
+  border-radius: 10px;
+  max-width: 700px;
+  margin: auto;
+  box-shadow: 0 0 15px rgba(0,0,0,0.6);
+}
+
+/* Uniform Input + Select Fields */
+input, select {
+  margin-bottom: 15px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  background-color: white;
+  color: black;
+  display: block;
+}
+
+/* Submit Button */
+button {
+  background-color: #3498db;
+  color: white;
+  cursor: pointer;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #011d30;
+}
+
+/* Prediction Result Box */
+#result {
+  margin: 30px auto;
+  background-color: rgba(48, 47, 47, 0.95);
+  color: #cdd6e0;
+  font-size: 20px;
+  padding: 15px;
+  border-radius: 10px;
+  max-width: 700px;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  opacity: 0.0;
+  transition: opacity 0.3s ease;
+  
+}
+
+
+#recommendation-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#recommendation-table th, #recommendation-table td {
+    border: 1px solid #ccc;
+    padding: 12px;
+    text-align: center;
+}
+
+#recommendation-table th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+}
+
+#recommendation-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+  
+</style>
+
+  
+</head>
+<body>
+  <h2 style="text-align: center;">🏠 House Price Prediction</h2>
+  <p style="text-align: center;">Enter the details of the house to get an estimated price.</p>
+
+  <!-- Input Form -->
+  <form id="prediction-form">
+    <!-- Numerical Features -->
+    <label for="GrLivArea">Above Ground Living Area (sqft):</label>
+    <input type="number" id="GrLivArea" name="GrLivArea" required min="500" max="5000"/>
+
+    <label for="GarageCars">Number of Garage Cars:</label>
+    <input type="number" id="GarageCars" name="GarageCars" required min="0" max="5"/>
+
+    <label for="GarageArea">Garage Area (sqft):</label>
+    <input type="number" id="GarageArea" name="GarageArea" required min="0" max="1500"/>
+
+    <label for="MasVnrArea">Masonry Veneer Area:</label>
+    <input type="number" id="MasVnrArea" name="MasVnrArea" required min="0" max="1000"/>
+
+    <label for="YearBuilt">Year Built:</label>
+    <input type="number" id="YearBuilt" name="YearBuilt" required min="1800" max="2025"/>
+
+    <label for="TotalBsmtSF">Total Basement Area (sqft):</label>
+    <input type="number" id="TotalBsmtSF" name="TotalBsmtSF" required min="0" max="3000"/>
+
+    <label for="FullBath">Number of Full Bathrooms:</label>
+    <input type="number" id="FullBath" name="FullBath" required min="0" max="5"/>
+
+    <label for="HalfBath">Number of Half Bathrooms:</label>
+    <input type="number" id="HalfBath" name="HalfBath" required min="0" max="5"/>
+
+    <label for="BedroomAbvGr">Number of Bedrooms Above Ground:</label>
+    <input type="number" id="BedroomAbvGr" name="BedroomAbvGr" required min="0" max="10"/>
+
+    <label for="Fireplaces">Number of Fireplaces:</label>
+    <input type="number" id="Fireplaces" name="Fireplaces" required min="0" max="5"/>
+
+    <label for="LotArea">Lot Area (sqft):</label>
+    <input type="number" id="LotArea" name="LotArea" required min="1000" max="100000"/>
+
+    <label for="OverallQual">Overall Quality (1-10):</label>
+    <input type="number" id="OverallQual" name="OverallQual" required min="1" max="10"/>
+
+    <label for="OverallCond">Overall Condition (1-10):</label>
+    <input type="number" id="OverallCond" name="OverallCond" required min="1" max="10"/>
+
+    <label for="YearRemodAdd">Year Remodeled:</label>
+    <input type="number" id="YearRemodAdd" name="YearRemodAdd" required min="1800" max="2025"/>
+
+    <label for="GarageYrBlt">Garage Year Built:</label>
+    <input type="number" id="GarageYrBlt" name="GarageYrBlt" required min="1800" max="2025"/>
+
+    <!-- Categorical Features -->
+    <label for="ExterQual">Exterior Quality:</label>
+    <select id="ExterQual" name="ExterQual" required>
+        <option value="Ex">Excellent</option>
+        <option value="Gd" selected>Good</option>
+        <option value="TA">Typical/Average</option>
+        <option value="Fa">Fair</option>
+        <option value="Po">Poor</option>
+    </select>
+
+    <label for="KitchenQual">Kitchen Quality:</label>
+    <select id="KitchenQual" name="KitchenQual" required>
+        <option value="Ex">Excellent</option>
+        <option value="Gd" selected>Good</option>
+        <option value="TA">Typical/Average</option>
+        <option value="Fa">Fair</option>
+        <option value="Po">Poor</option>
+    </select>
+
+    <label for="CentralAir">Central Air Conditioning:</label>
+    <select id="CentralAir" name="CentralAir" required>
+        <option value="Y" selected>Yes</option>
+        <option value="N">No</option>   
+    </select>
+
+    <label for="HeatingQC">Heating Quality and Condition:</label>
+    <select id="HeatingQC" name="HeatingQC" required>
+        <option value="Ex">Excellent</option>
+        <option value="Gd" selected>Good</option>
+        <option value="TA">Typical/Average</option>
+        <option value="Fa">Fair</option>
+        <option value="Po">Poor</option>
+    </select>
+
+    <label for="SaleType">Sale Type:</label>
+    <select id="SaleType" name="SaleType" required>
+        <option value="WD" selected>Warranty Deed - Conventional</option>
+        <option value="CWD">Warranty Deed - Cash</option>
+        <option value="New">New Home</option>
+        <option value="COD">Cash on Delivery</option>
+        <option value="ConLD">Contract 15% Down</option>
+        <option value="ConLI">Contract Low Interest</option>
+        <option value="ConLw">Contract Low Down Payment</option>
+        <option value="Oth">Other</option>
+    </select>
+
+    <label for="SaleCondition">Sale Condition:</label>
+    <select id="SaleCondition" name="SaleCondition" required>
+        <option value="Normal" selected>Normal Sale</option>
+        <option value="Abnorml">Abnormal Sale - Trade, foreclosure, etc.</option>
+        <option value="AdjLand">Adjoining Land Purchase</option>
+        <option value="Alloca">Allocation - two linked properties</option>
+        <option value="Family">Sale between family members</option>
+        <option value="Partial">Home was not completed when last assessed</option>
+    </select>
+
+    <label for="PoolQC">Pool Quality:</label>
+<select id="PoolQC" name="PoolQC">
+    <option value="None" selected>None</option>
+    <option value="Ex">Excellent</option>
+    <option value="Gd">Good</option>
+    <option value="TA">Typical/Average</option>
+    <option value="Fa">Fair</option>
+</select>
+
+    <label for="MiscFeature">Miscellaneous Feature:</label>
+    <select id="MiscFeature" name="MiscFeature">
+        <option value="None" selected>None</option>
+        <option value="Shed">Shed</option>
+        <option value="Gar2">Second Garage</option>
+        <option value="Othr">Other</option>
+        <option value="TenC">Tennis Court</option>
+    </select>
+
+    <label for="Alley">Alley Access:</label>
+    <select id="Alley" name="Alley">
+        <option value="None" selected>None</option>
+        <option value="Grvl">Gravel</option>
+        <option value="Pave">Paved</option>
+    </select>
+
+    <label for="Fence">Fence Quality:</label>
+    <select id="Fence" name="Fence">
+        <option value="None" selected>None</option>
+        <option value="GdPrv">Good Privacy</option>
+        <option value="MnPrv">Minimum Privacy</option>
+        <option value="GdWo">Good Wood</option>
+        <option value="MnWw">Minimum Wood/Wire</option>
+    </select>
+
+    <label for="MasVnrType">Masonry Veneer Type:</label>
+    <select id="MasVnrType" name="MasVnrType">
+        <option value="None" selected>None</option>
+        <option value="BrkCmn">Brick Common</option>
+        <option value="BrkFace">Brick Face</option>
+        <option value="CBlock">Cinder Block</option>
+        <option value="Stone">Stone</option>
+    </select>
+
+    <label for="FireplaceQu">Fireplace Quality:</label>
+    <select id="FireplaceQu" name="FireplaceQu">
+        <option value="None" selected>None</option>
+        <option value="Ex">Excellent</option>
+        <option value="Gd">Good</option>
+        <option value="TA">Typical/Average</option>
+        <option value="Fa">Fair</option>
+        <option value="Po">Poor</option>
+    </select>
+
+    <label for="GarageType">Garage Type:</label>
+    <select id="GarageType" name="GarageType">
+        <option value="None" selected>None</option>
+        <option value="Attchd">Attached</option>
+        <option value="Detchd">Detached</option>
+        <option value="BuiltIn">Built-In</option>
+        <option value="CarPort">Car Port</option>
+        <option value="Basment">Basement</option>
+        <option value="2Types">Two Types</option>
+    </select>
+
+    <label for="GarageFinish">Garage Finish:</label>
+    <select id="GarageFinish" name="GarageFinish">
+        <option value="None" selected>None</option>
+        <option value="Fin">Finished</option>
+        <option value="RFn">Rough Finished</option>
+        <option value="Unf">Unfinished</option>
+    </select>
+
+    <label for="GarageQual">Garage Quality:</label>
+    <select id="GarageQual" name="GarageQual">
+        <option value="None" selected>None</option>
+        <option value="Ex">Excellent</option>
+        <option value="Gd">Good</option>
+        <option value="TA">Typical/Average</option>
+        <option value="Fa">Fair</option>
+        <option value="Po">Poor</option>
+    </select>
+
+    <label for="GarageCond">Garage Condition:</label>
+    <select id="GarageCond" name="GarageCond">
+        <option value="None" selected>None</option>
+        <option value="Ex">Excellent</option>
+        <option value="Gd">Good</option>
+        <option value="TA">Typical/Average</option>
+        <option value="Fa">Fair</option>
+        <option value="Po">Poor</option>
+    </select>
+
+    <label for="BsmtQual">Basement Quality:</label>
+    <select id="BsmtQual" name="BsmtQual">
+        <option value="None" selected>None</option>
+        <option value="Ex">Excellent</option>
+        <option value="Gd">Good</option>
+        <option value="TA">Typical/Average</option>
+        <option value="Fa">Fair</option>
+        <option value="Po">Poor</option>
+    </select>
+
+    <label for="BsmtCond">Basement Condition:</label>
+    <select id="BsmtCond" name="BsmtCond">
+        <option value="None" selected>None</option>
+        <option value="Ex">Excellent</option>
+        <option value="Gd">Good</option>
+        <option value="TA">Typical/Average</option>
+        <option value="Fa">Fair</option>
+        <option value="Po">Poor</option>
+    </select>
+
+    <label for="BsmtExposure">Basement Exposure:</label>
+    <select id="BsmtExposure" name="BsmtExposure">
+        <option value="None" selected>None</option>
+        <option value="Gd">Good Exposure</option>
+        <option value="Av">Average Exposure</option>
+        <option value="Mn">Minimum Exposure</option>
+        <option value="No">No Exposure</option>
+    </select>
+
+    <label for="BsmtFinType1">Basement Finish Type 1:</label>
+    <select id="BsmtFinType1" name="BsmtFinType1">
+        <option value="None" selected>None</option>
+        <option value="GLQ">Good Living Quarters</option>
+        <option value="ALQ">Average Living Quarters</option>
+        <option value="BLQ">Below Average Living Quarters</option>
+        <option value="Rec">Rec Room</option>
+        <option value="LwQ">Low Quality</option>
+        <option value="Unf">Unfinished</option>
+    </select>
+
+    <label for="BsmtFinType2">Basement Finish Type 2:</label>
+    <select id="BsmtFinType2" name="BsmtFinType2">
+        <option value="None" selected>None</option>
+        <option value="GLQ">Good Living Quarters</option>
+        <option value="ALQ">Average Living Quarters</option>
+        <option value="BLQ">Below Average Living Quarters</option>
+        <option value="Rec">Rec Room</option>
+        <option value="LwQ">Low Quality</option>
+        <option value="Unf">Unfinished</option>
+    </select>
+
+    <button type="submit">Predict Price</button>
+  </form>
+
+  <!-- Result Section -->
+  <div id="result"></div>
+
+  <!-- Recommendations Section -->
+  <div id="recommendations" style="opacity: 0; transition: opacity 0.3s ease; margin: 30px auto; background-color: rgba(48, 47, 47, 0.95); color: #cdd6e0; font-size: 18px; padding: 15px; border-radius: 10px; max-width: 700px; text-align: center; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
+  <h3>🏡 Recommended Properties</h3>
+  <table id="recommendation-table" style="width: 100%; border-collapse: collapse; margin-top: 20px; background: white; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+    <thead>
+      <tr style="background-color: #f8f8f8; font-weight: bold;">
+        <th style="border: 1px solid #ccc; padding: 12px; text-align: center; color: black;">ID</th>
+        <th style="border: 1px solid #ccc; padding: 12px; text-align: center; color: black;">Price ($)</th>
+        <th style="border: 1px solid #ccc; padding: 12px; text-align: center; color: black;">Bedrooms</th>
+        <th style="border: 1px solid #ccc; padding: 12px; text-align: center; color: black;">Area (sq ft)</th>
+      </tr>
+    </thead>
+    <tbody id="recommendation-table-body">
+      <!-- Recommendations will be dynamically added here -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+  document.getElementById('prediction-form').addEventListener('submit', async function(event) {
+    event.preventDefault(); // Prevent page reload
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const formJSON = {};
+    formData.forEach((value, key) => {
+      formJSON[key] = value;
+    });
+
+    try {
+      const response = await fetch('/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify([formJSON])  // Wrap in array for DataFrame
+      });
+
+      const result = await response.json();
+
+      const resultBox = document.getElementById('result');
+      const recommendationsBox = document.getElementById('recommendations');
+      const recommendationTableBody = document.getElementById('recommendation-table-body');
+
+      if (result.predictions) {
+        resultBox.innerText = "🏠 Predicted Price: $" + result.predictions[0].toFixed(2);
+        resultBox.style.opacity = "1"; // Make the result box fully visible
+
+        // Display recommendations
+        recommendationTableBody.innerHTML = ""; // Clear previous recommendations
+        result.recommendations.forEach(rec => {
+          const row = document.createElement('tr');
+          row.style.backgroundColor = recommendationTableBody.children.length % 2 === 0 ? "#f2f2f2" : "white"; // Alternate row colors
+
+          row.innerHTML = `
+            <td style="border: 1px solid #ccc; padding: 12px; text-align: center; color: black;">${rec.Id}</td>
+            <td style="border: 1px solid #ccc; padding: 12px; text-align: center; color: black;">${rec.SalePrice}</td>
+            <td style="border: 1px solid #ccc; padding: 12px; text-align: center; color: black;">${rec.BedroomAbvGr}</td>
+            <td style="border: 1px solid #ccc; padding: 12px; text-align: center; color: black;">${rec.GrLivArea}</td>
+          `;
+          recommendationTableBody.appendChild(row);
+        });
+        recommendationsBox.style.opacity = "1"; // Make the recommendations box fully visible
+      } else {
+        resultBox.innerText = "❌ Prediction failed!";
+        resultBox.style.opacity = "1"; // Ensure the result box is visible even on failure
+        recommendationsBox.style.opacity = "0"; // Hide recommendations on failure
+      }
+    } catch (error) {
+      const resultBox = document.getElementById('result');
+      resultBox.innerText = "❌ Error: " + error.message;
+      resultBox.style.opacity = "1"; // Ensure the result box is visible even on error
+    }
+  });
+</script>
+
+</body>
+</html>
