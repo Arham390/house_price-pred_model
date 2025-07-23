@@ -63,27 +63,25 @@ import numpy as np
 
 def recommend_svd_no_filter(input_df, listings_path='train.csv'):
     df = pd.read_csv(listings_path)
-
     features = ["GrLivArea", "BedroomAbvGr", "OverallQual", "OverallCond", "GarageCars", "FullBath"]
     df = df.dropna(subset=features)
 
-    listing_vectors = df[features].values
+    A = df[features].values  # matrix: rows = listings, cols = features
     input_vector = input_df[features].values[0].reshape(1, -1)
 
-    scaler = MinMaxScaler()
-    all_vectors = np.vstack([input_vector, listing_vectors])
-    scaled = scaler.fit_transform(all_vectors)
+    # Combine into matrix
+    A_augmented = np.vstack([input_vector, A])
 
+    # Apply SVD directly without scaling
     svd = TruncatedSVD(n_components=2, random_state=42)
-    pipeline = make_pipeline(svd, Normalizer(copy=False))
-    reduced = pipeline.fit_transform(scaled)
+    A_reduced = svd.fit_transform(A_augmented)
 
-    input_svd = reduced[0].reshape(1, -1)
-    listings_svd = reduced[1:]
+    input_svd = A_reduced[0].reshape(1, -1)
+    listings_svd = A_reduced[1:]
 
     similarities = cosine_similarity(input_svd, listings_svd)[0]
     df["similarity_svd"] = similarities
 
     top5 = df.sort_values(by="similarity_svd", ascending=False).head(5)
-    return top5[["Id", "SalePrice", "BedroomAbvGr", "GrLivArea", "OverallQual", "similarity_svd"]].to_dict(orient="records")
+    return top5[["Id", "SalePrice","BedroomAbvGr","GrLivArea", "OverallQual", "similarity_svd"]].to_dict(orient="records")
 
