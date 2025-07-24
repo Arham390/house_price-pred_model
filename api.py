@@ -35,7 +35,7 @@ def predict_route():
     predictions = np.expm1(predictions)
 
     # Recommend based on prediction
-    recommendations = recommend_svd_no_filter(input_df)
+    recommendations = recommend_svd_no_filter(predictions[0],target_user_id=10)
 
     return jsonify({
         "predictions": predictions.tolist(),

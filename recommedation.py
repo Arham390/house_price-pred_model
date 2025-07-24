@@ -41,7 +41,7 @@ def recommend(pred_price, input_df, listings_path='listings.csv'):
     input_scaled = scaled[0].reshape(1, -1)
     listings_scaled = scaled[1:]
 
-    # Compute cosine similarity
+    
     similarities = cosine_similarity(input_scaled, listings_scaled)[0]
 
     # Add to DataFrame

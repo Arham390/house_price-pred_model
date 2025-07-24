@@ -61,27 +61,59 @@ import json
 import pandas as pd
 import numpy as np
 
-def recommend_svd_no_filter(input_df, listings_path='train.csv'):
+import pandas as pd
+import numpy as np
+from sklearn.decomposition import TruncatedSVD
+def recommend_svd_no_filter( pred_price , listings_path='train.csv', target_user_id=10, min_price=0, max_price=float('inf')):
+    n_users = 100
+
+    min_price = pred_price - 0.1 * pred_price
+    max_price = pred_price * 1.5
+    # Load listings
     df = pd.read_csv(listings_path)
-    features = ["GrLivArea", "BedroomAbvGr", "OverallQual", "OverallCond", "GarageCars", "FullBath"]
-    df = df.dropna(subset=features)
 
-    A = df[features].values  # matrix: rows = listings, cols = features
-    input_vector = input_df[features].values[0].reshape(1, -1)
+    # Assign synthetic user_id and ratings
+    df['user_id'] = np.random.randint(1, n_users + 1, size=len(df))
+    df['property_id'] = df['Id']
+    df['rating'] = np.random.randint(1, 7, size=len(df))  # Ratings from 1 to 6
 
-    # Combine into matrix
-    A_augmented = np.vstack([input_vector, A])
+    # Create user-item interaction matrix
+    ratings_matrix = df.pivot_table(index='user_id', columns='property_id', values='rating', fill_value=0)
 
-    # Apply SVD directly without scaling
-    svd = TruncatedSVD(n_components=2, random_state=42)
-    A_reduced = svd.fit_transform(A_augmented)
+    # Check if target user exists
+    if target_user_id not in ratings_matrix.index:
+        return f"User {target_user_id} not found in ratings data."
 
-    input_svd = A_reduced[0].reshape(1, -1)
-    listings_svd = A_reduced[1:]
+    # Apply SVD
+    svd = TruncatedSVD(n_components=20, random_state=42)
+    R = ratings_matrix.values
+    U = svd.fit_transform(R)            # User feature matrix
+    V = svd.components_.T               # Item feature matrix
 
-    similarities = cosine_similarity(input_svd, listings_svd)[0]
-    df["similarity_svd"] = similarities
+    # Get user latent vector
+    user_index = ratings_matrix.index.get_loc(target_user_id)
+    user_vector = U[user_index]         # Shape: (20,)
 
-    top5 = df.sort_values(by="similarity_svd", ascending=False).head(5)
-    return top5[["Id", "SalePrice","BedroomAbvGr","GrLivArea", "OverallQual", "similarity_svd"]].to_dict(orient="records")
+    # Score all properties
+    scores = np.dot(V, user_vector)     # Shape: (num_properties,)
+    top_indices = scores.argsort()[::-1]
 
+    # Get property IDs
+    top_property_ids = ratings_matrix.columns[top_indices]
+
+    # Get all ranked properties
+    ranked_df = df[df['property_id'].isin(top_property_ids)][
+        ["Id", "SalePrice", "BedroomAbvGr", "GrLivArea", "OverallQual", "property_id"]
+    ].drop_duplicates(subset="Id")
+
+    # Add scores to this DataFrame
+    property_score_map = dict(zip(ratings_matrix.columns[top_indices], scores[top_indices]))
+    ranked_df["score"] = ranked_df["property_id"].map(property_score_map)
+
+    # Filter by price range
+    filtered = ranked_df[(ranked_df["SalePrice"] >= min_price) & (ranked_df["SalePrice"] <= max_price)]
+
+    # Re-rank top 5 by score
+    final_top = filtered.sort_values(by="score", ascending=False).head(5)
+
+    return final_top.drop(columns=["score", "property_id"]).to_dict(orient="records")
