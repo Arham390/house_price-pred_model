@@ -67,9 +67,11 @@ from sklearn.decomposition import TruncatedSVD
 def recommend_svd_no_filter( pred_price , listings_path='train.csv', target_user_id=10, min_price=0, max_price=float('inf')):
     n_users = 100
 
+#filtred logic
     min_price = pred_price - 0.1 * pred_price
     max_price = pred_price * 1.5
-    # Load listings
+   
+   
     df = pd.read_csv(listings_path)
 
     # Assign synthetic user_id and ratings
@@ -80,9 +82,7 @@ def recommend_svd_no_filter( pred_price , listings_path='train.csv', target_user
     # Create user-item interaction matrix
     ratings_matrix = df.pivot_table(index='user_id', columns='property_id', values='rating', fill_value=0)
 
-    # Check if target user exists
-    if target_user_id not in ratings_matrix.index:
-        return f"User {target_user_id} not found in ratings data."
+    
 
     # Apply SVD
     svd = TruncatedSVD(n_components=20, random_state=42)
@@ -92,9 +92,10 @@ def recommend_svd_no_filter( pred_price , listings_path='train.csv', target_user
 
     # Get user latent vector
     user_index = ratings_matrix.index.get_loc(target_user_id)
-    user_vector = U[user_index]         # Shape: (20,)
+    user_vector = U[user_index]         
+    # Shape: (20,)
 
-    # Score all properties
+    
     scores = np.dot(V, user_vector)     # Shape: (num_properties,)
     top_indices = scores.argsort()[::-1]
 
